@@ -2,8 +2,11 @@
 FP utils
 --------
 
+I.M., 2025
+
 """
 from typing import Callable
+from typing import Optional
 
 import numpy as np
 from numpy.typing import NDArray
@@ -13,7 +16,7 @@ from numba import njit
 
 @njit
 def trajectory(
-    length:int, 
+    length:int,
     mapping:Callable[[NDArray[np.float64], NDArray[np.float64]], NDArray[np.float64]],
     state:NDArray[np.float64],
     parameters:NDArray[np.float64]
@@ -23,7 +26,7 @@ def trajectory(
 
     Parameters
     ----------
-    
+
     length: int
         trajectory length
     mapping: Callable[[NDArray[np.float64], NDArray[np.float64]], NDArray[np.float64]]
@@ -45,6 +48,112 @@ def trajectory(
         local = mapping(local, parameters)
         table[i] = local
     return table
+
+
+def expand(
+    mapping: Callable[[NDArray[np.float64], NDArray[np.float64]], NDArray[np.float64]]
+) -> Callable[[NDArray[np.float64], NDArray[np.float64]], NDArray[np.float64]]:
+    """
+    Expand mapping to get order as the last parameter
+
+    Parameters
+    ----------
+    mapping: Callable[[NDArray[np.float64], NDArray[np.float64]], NDArray[np.float64]]
+        input mapping
+
+    Returns
+    -------
+    Callable[[NDArray[np.float64], NDArray[np.float64]], NDArray[np.float64]]
+        expanded mapping
+
+    """
+    @njit
+    def closure(
+        state: NDArray[np.float64],
+        parameters: NDArray[np.float64]
+    ) -> NDArray[np.float64]:
+        order = int(np.round(parameters[-1]))
+        knobs = parameters[:-1]
+        local = state
+        for _ in range(order):
+            local = mapping(local, knobs)
+        return local - state
+    return closure
+
+
+def problem_factory(
+    mapping: Callable[[NDArray[np.float64], NDArray[np.float64]], NDArray[np.float64]],
+    order: int=1,
+    roots: Optional[NDArray[np.float64]] = None,
+    powers: Optional[NDArray[np.int64]] = None,
+    alpha: float = 1.0E-4,
+    epsilon: float=1.0E-16
+) -> Callable[[NDArray[np.float64], NDArray[np.float64]], NDArray[np.float64]]:
+    """
+    Fixed point residual factory with optional deflation of known roots
+
+    Parameters
+    ----------
+    mapping: Callable[[NDArray[np.float64], NDArray[np.float64]], NDArray[np.float64]]
+        input mapping
+    order: int, default=1
+        fixed point order
+    roots: Optional[NDArray[np.float64]], default=None
+        array of known roots
+    powers: Optional[NDArray[np.int64]], default=None
+        roots multiplicity
+    alpha: float, default=1.0E-4
+        deflation offset
+    epsilon: float, default=1.0E-16
+        stabilization epsilon
+
+    Returns
+    -------
+    Callable[[NDArray[np.float64], NDArray[np.float64]], NDArray[np.float64]]
+        fixed point residual
+
+    """
+    @njit
+    def weight(
+        state: NDArray[np.float64],
+        roots: NDArray[np.float64],
+        powers: NDArray[np.int64],
+        alpha: float,
+        epsilon: float
+    ) -> NDArray[np.float64]:
+        dimension, length = state.shape
+        factors = np.ones(length, dtype=np.float64)
+        for i in range(len(roots)):
+            for j in range(length):
+                local = 0.0
+                for k in range(dimension):
+                    delta = state[k, j] - roots[i, k]
+                    local += delta*delta
+                factors[j] *= (alpha + (local + epsilon)**(-0.5*powers[i]))
+        return factors
+    if roots is not None:
+        if powers is None:
+            powers = np.ones(len(roots), dtype=np.int64)
+        @njit
+        def closure(
+            state: NDArray[np.float64],
+            parameters: NDArray[np.float64]
+        ) -> NDArray[np.float64]:
+            local = state
+            for _ in range(order):
+                local = mapping(local, parameters)
+            return weight(state, roots, powers, alpha, epsilon)*(local - state)
+        return closure
+    @njit
+    def closure(
+        state: NDArray[np.float64],
+        parameters: NDArray[np.float64]
+    ) -> NDArray[np.float64]:
+        local = state
+        for _ in range(order):
+            local = mapping(local, parameters)
+        return local - state
+    return closure
 
 
 def exact(

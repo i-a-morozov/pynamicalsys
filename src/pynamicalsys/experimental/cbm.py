@@ -586,22 +586,22 @@ def sphere_polygon(
         proper polygon
 
     """
-    size = len(origin)
-    points = np.empty((size, count), dtype=np.float64)
-    buffer = np.empty(size, dtype=np.float64)
+    dimension = len(origin)
+    points = np.empty((dimension, count), dtype=np.float64)
+    buffer = np.empty(dimension, dtype=np.float64)
     for j in range(count):
         norm = 0.0
-        for i in range(size):
+        for i in range(dimension):
             rnd = np.random.normal()
             buffer[i] = rnd
             norm += rnd*rnd
         scale = radius / np.sqrt(norm)
-        for i in range(size):
+        for i in range(dimension):
             points[i, j] = origin[i] + scale*buffer[i]
     values = sign(function(points, parameters))
-    matrix = complete_matrix(size)
-    vertices = np.empty(matrix.shape) * np.nan
-    for i in range(2**size):
+    matrix = complete_matrix(dimension)
+    vertices = np.nan*np.empty(matrix.shape)
+    for i in range(2**dimension):
         for j in range(count):
             if np.all(matrix[i, :] == values[:, j]):
                 vertices[i, :] = points[:, j]
@@ -651,10 +651,10 @@ def proper_polygon(
     for i in range(dimension):
         shape[i] = count
     changes = change(sign(function(points, parameters)), shape)
-    center = intersections(points, changes)
-    if center.size == 0:
+    origin = intersections(points, changes)
+    if origin.size == 0:
         return np.full((2**dimension, dimension), np.nan)
-    vertices = sphere_polygon(ns, center, radius, function, parameters)
+    vertices = sphere_polygon(ns, origin, radius, function, parameters)
     i = 0
     while i < limit:
         retry = False
@@ -665,7 +665,7 @@ def proper_polygon(
         if not retry:
             break
         radius = radius*factor
-        vertices = sphere_polygon(ns, center, radius, function, parameters)
+        vertices = sphere_polygon(ns, origin, radius, function, parameters)
         i += 1
     return vertices
 
