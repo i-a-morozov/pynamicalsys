@@ -636,7 +636,7 @@ def proper_polygon(
         additional function parameters
     limit : int, default=64
         maximum expansion attempts
-    factor : float, deault=0.5*(1.0 + 5.0**0.5)
+    factor : float, default=0.5*(1.0 + 5.0**0.5)
         expansion factor
 
     Returns
@@ -693,7 +693,7 @@ def check(
 
     Returns
     -------
-    Tuple[np.bool, NDArray[np.float64]]
+    Tuple[bool, NDArray[np.float64]]
 
     """
     i, j = diagonal(polygon) - 1

@@ -77,7 +77,7 @@ def expand(
         local = state
         for _ in range(order):
             local = mapping(local, knobs)
-        return local - state
+        return local
     return closure
 
 
@@ -204,7 +204,7 @@ def canonize(
     ----------
     chain: NDArray[np.float64]
         chain
-    tol: float, default=1.0E-9
+    tolerance: float, default=1.0E-9
         tolerance
     reverse: bool, default=True
         reverse
