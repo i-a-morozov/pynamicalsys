@@ -20,6 +20,7 @@ from numba import njit
 from numba import prange
 from numba.typed import List as NDList
 
+
 @njit(cache=True)
 def solve(
     edges: NDArray[np.int64],

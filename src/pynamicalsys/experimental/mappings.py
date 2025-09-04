@@ -3,6 +3,7 @@ from numpy.typing import NDArray
 
 from numba import njit
 
+
 @njit
 def forward2D(
     x: NDArray[np.float64], 

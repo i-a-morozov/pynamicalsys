@@ -2,8 +2,8 @@
 Adapters
 --------
 
-Factories to create (n, m) mapping from (n, ) mapping
-And (n, ) mapping from (n, m) mapping
+- (n, m) mapping -> (n,  ) mapping (scalarize)
+- (n,  ) mapping -> (n, m) mapping (vectorize)
 
 I.M., 2025
 
@@ -44,7 +44,6 @@ def scalarize(
     return closure
 
 
-
 def vectorize(
     mapping: Callable[[NDArray[np.float64], NDArray[np.float64]], NDArray[np.float64]], 
     parallel: bool = False
@@ -74,5 +73,5 @@ def vectorize(
         result = np.empty((n, m), dtype=np.float64)
         for i in prange(m):
             result[:, i] = mapping(state[:, i], parameters)
-        return result
+        return np.ascontiguousarray(result)
     return closure
