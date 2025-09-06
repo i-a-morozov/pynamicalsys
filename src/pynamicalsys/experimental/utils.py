@@ -19,7 +19,8 @@ def trajectory(
     length:int,
     mapping:Callable[[NDArray[np.float64], NDArray[np.float64]], NDArray[np.float64]],
     state:NDArray[np.float64],
-    parameters:NDArray[np.float64]
+    parameters:NDArray[np.float64],
+    orbit: bool=True,
 ) -> NDArray[np.float64]:
     """
     Generate trajectories
@@ -35,6 +36,8 @@ def trajectory(
         state
     parameters: NDArray[np.float64]
         additional mapping parameters
+    orbit: bool, defaul=True
+        flag to return orbit from all iterations
 
     Returns
     -------
@@ -42,12 +45,17 @@ def trajectory(
         trajectory
 
     """
-    local = np.copy(state)
-    table = np.empty((length, *state.shape), dtype=np.float64)
-    for i in range(length):
-        local = mapping(local, parameters)
-        table[i] = local
-    return table
+    local = np.ascontiguousarray(state)
+    if orbit:
+        table = np.empty((length, *state.shape), dtype=np.float64)
+        for i in range(length):
+            local = mapping(local, parameters)
+            table[i] = local
+        return table
+    else:
+        for i in range(length):
+            local = mapping(local, parameters)
+        return local.reshape(1, *local.shape)
 
 
 def expand(
@@ -81,7 +89,7 @@ def expand(
     return closure
 
 
-def problem_factory(
+def problem(
     mapping: Callable[[NDArray[np.float64], NDArray[np.float64]], NDArray[np.float64]],
     order: int=1,
     roots: Optional[NDArray[np.float64]] = None,
@@ -185,7 +193,8 @@ def exact(
         logical mask
 
     """
-    orbits = trajectory(order, mapping, points.T, parameters).T
+    local = np.ascontiguousarray(points.T)
+    orbits = trajectory(order, mapping, local, parameters).T
     counts = np.empty(len(points), dtype=np.int64)
     for i in range(len(points)):
         counts[i] = np.isclose(orbits[i].T, points[i], rtol=tolerance, atol=tolerance).all(axis=-1).sum()
@@ -265,7 +274,8 @@ def unique(
         logical mask
 
     """
-    chains = trajectory(order, mapping, points.T, parameters).T
+    local = np.ascontiguousarray(points.T)
+    chains = trajectory(order, mapping, local, parameters).T
     starts = np.stack([canonize(chain.T, tolerance=tolerance, reverse=reverse) for chain in chains])
     matrix = (starts * starts).sum(-1)
     matrix = matrix.reshape(-1, 1) + matrix - 2.0*(starts @ starts.T)

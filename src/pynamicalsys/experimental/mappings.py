@@ -138,7 +138,6 @@ def bb_map_force_symmetry(
     
     """
     nu, xi, ks = parameters
-    nu, xi, ks = parameters
     c = np.cos(2.0*np.pi*nu)
     s = np.sin(2.0*np.pi*nu)    
     p = 0.5*(2.0*q*c + (ks*q*q + (8.0*np.pi*xi)*(np.exp(-0.5*q*q) - 1.0)/q)*s)

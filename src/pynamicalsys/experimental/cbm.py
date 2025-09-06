@@ -51,7 +51,7 @@ def solve(
     ncube : int, default=32
         number of grid points per dimension
     nball : int, default=64
-        number of sphere random points, 8*2**dimension
+        number of sphere random points
     max_iterations : int, default=128
         maximum number of generalised-bisection steps
     max_expansions : int, default=16
@@ -113,7 +113,7 @@ def psolve(
     ncube : int, default=32
         number of grid points per dimension
     nball : int, default=64
-        number of sphere random points, 8*2**dimension
+        number of sphere random points
     max_iterations : int, default=128
         maximum number of generalised-bisection steps
     max_expansions : int, default=16
