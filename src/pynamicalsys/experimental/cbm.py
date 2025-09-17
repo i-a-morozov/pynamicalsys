@@ -6,6 +6,7 @@ CBM fixed point estimation
 
 M. N. Vrahatis, An Efficient Method for Locating and Computing Periodic Orbits of Nonlinear Mappings, 1995
 Code adapted from xsuite/xnlbd
+D. E. Veres et al., Xnlbd: a New Python Package for the Analysis of Non-linear Beam Dynamics Phenomena
 
 I.M., 2025
 
